@@ -12,15 +12,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.UUID;
+
+import static android.speech.tts.TextToSpeech.QUEUE_FLUSH;
 
 public class Controlling extends AppCompatActivity {
     private static final String TAG = "BlueTest5-Controlling";
@@ -35,8 +40,9 @@ public class Controlling extends AppCompatActivity {
 
     private BluetoothDevice mDevice;
 
-
-
+    private SeekBar mSeekBarPitch;
+    private SeekBar mSeekBarSpeed;
+    private TextToSpeech mTTS;
 
     private ProgressDialog progressDialog;
     TextView tv;
@@ -49,7 +55,8 @@ public class Controlling extends AppCompatActivity {
 
         ActivityHelper.initialize(this);
         // mBtnDisconnect = (Button) findViewById(R.id.btnDisconnect);
-
+        mSeekBarPitch = findViewById(R.id.seek_bar_pitch);
+        mSeekBarSpeed = findViewById(R.id.seek_bar_speed);
 
         Intent intent = getIntent();
         Bundle b = intent.getExtras();
@@ -58,6 +65,14 @@ public class Controlling extends AppCompatActivity {
         mMaxChars = b.getInt(MainActivity.BUFFER_SIZE);
         tv=findViewById(R.id.text);
         Log.d(TAG, "Ready");
+        mTTS=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                if(i==TextToSpeech.SUCCESS){
+                    int result=mTTS.setLanguage(Locale.ENGLISH);
+                }
+            }
+        });
 
     }
 
@@ -99,6 +114,13 @@ public class Controlling extends AppCompatActivity {
                             @Override
                             public void run() {
                                 tv.setText(strInput);
+                                float pitch1=(float)mSeekBarPitch.getProgress()/50;
+                                if(pitch1<0.1)pitch1=0.1f;
+                                float speech1=(float)mSeekBarSpeed.getProgress()/50;
+                                if(speech1<0.1)speech1=0.1f;
+                                mTTS.setPitch(pitch1);
+                                mTTS.setSpeechRate(speech1);
+                                mTTS.speak(strInput, QUEUE_FLUSH,null);
                             }
                         });
 
